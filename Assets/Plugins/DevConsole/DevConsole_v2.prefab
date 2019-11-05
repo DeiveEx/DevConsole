@@ -946,7 +946,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 6216075928074730852}
-        m_MethodName: FindSuggestions
+        m_MethodName: TextChanged
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1207,6 +1207,7 @@ MonoBehaviour:
   startOpened: 0
   showFunctionInfo: 0
   allowQuickCommands: 1
+  alwaysAutoComplete: 1
   consoleKey: f1
   suggestionHighlight: {r: 0, g: 1, b: 0, a: 1}
   historySize: 100

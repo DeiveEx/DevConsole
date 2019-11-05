@@ -382,6 +382,11 @@ PrefabInstance:
       propertyPath: startOpened
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6216075928074730852, guid: f25ec8237a38efb48bc5ae40a83ce0c4,
+        type: 3}
+      propertyPath: alwaysAutoComplete
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6256635379870076131, guid: f25ec8237a38efb48bc5ae40a83ce0c4,
         type: 3}
       propertyPath: m_textInfo.characterCount

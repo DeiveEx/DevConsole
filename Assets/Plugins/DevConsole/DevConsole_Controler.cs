@@ -21,6 +21,8 @@ namespace DevConsole
 		[Header("Preferences")]
 		[Tooltip("Allows commands that have no parameters to be called without the need to type the parenthesis.\nEx: \"help\" instead of \"help()\".\n\nNOTE: Only the fist command can take advantage of this, which means nested commands are required to have parenthesis.")]
 		public bool allowQuickCommands = true;
+		[Tooltip("If enabled, pressing ENTER will always autocomplete with the first suggestion, if available.")]
+		public bool alwaysAutoComplete;
 		public string consoleKey = "f1";
 		public Color suggestionHighlight = Color.green;
 		public int historySize = 100;
@@ -296,7 +298,7 @@ namespace DevConsole
 			}
 
 			//Either execute the command or autocomplete the text based on the suggestion
-			if (suggestions.Count == 0 || selectedSuggestionID == -1 || inputField.text == suggestions[selectedSuggestionID])
+			if (suggestions.Count == 0 || (selectedSuggestionID == -1 && !alwaysAutoComplete) || (selectedSuggestionID == -1 && inputField.text == suggestions[0]) || (selectedSuggestionID >= 0 && inputField.text == suggestions[selectedSuggestionID]))
 			{
 				//Reset everything
 				AppendLogLine("> " + commandLine);
@@ -326,7 +328,7 @@ namespace DevConsole
 					heldParams.Clear();
 				}
 			}
-			else if (suggestions.Count >= 1 && selectedSuggestionID >= 0)
+			else if (suggestions.Count >= 1)
 			{
 				//Autocompletes the text based on the current selected suggestions
 				string autoCompletedText = inputField.text;
@@ -340,10 +342,29 @@ namespace DevConsole
 					autoCompletedText = string.Empty;
 				}
 
-				autoCompletedText += suggestions[selectedSuggestionID];
+				if (alwaysAutoComplete && selectedSuggestionID == -1)
+				{
+					autoCompletedText += suggestions[0];
+				}
+				else
+				{
+					autoCompletedText += suggestions[selectedSuggestionID];
+				}
+
 				inputField.text = autoCompletedText;
 				RebuildSuggestionBox();
 			}
+		}
+
+		public void TextChanged(string text)
+		{
+			//Set the current text for the history
+			if (!Input.GetKeyDown(KeyCode.UpArrow) && !Input.GetKeyDown(KeyCode.DownArrow))
+			{
+				currentText = text;
+			}
+
+			FindSuggestions(text);
 		}
 		#endregion
 
@@ -514,14 +535,8 @@ namespace DevConsole
 		#endregion
 
 		#region Suggestions
-		public void FindSuggestions(string commandLine)
+		private void FindSuggestions(string commandLine)
 		{
-			//Set the current text for the history
-			if (!Input.GetKeyDown(KeyCode.UpArrow) && !Input.GetKeyDown(KeyCode.DownArrow))
-			{
-				currentText = commandLine;
-			}
-
 			if (string.IsNullOrEmpty(commandLine))
 			{
 				suggestionBox.SetActive(false);
@@ -530,7 +545,7 @@ namespace DevConsole
 
 			//Find any unique commands that has the typed text
 			currentCommand = commandLine.Contains("(") ? commandLine.Substring(commandLine.LastIndexOf('(') + 1) : commandLine;
-			suggestions = commands.Where(x => currentCommand.Length > 0 && x.name.StartsWith(currentCommand)).Select(x => x.name).Distinct().ToList();
+			suggestions = commands.Where(x => currentCommand.Length > 0 && x.name.StartsWith(currentCommand, StringComparison.InvariantCultureIgnoreCase)).Select(x => x.name).Distinct().ToList();
 
 			RebuildSuggestionBox();
 		}
@@ -574,6 +589,46 @@ namespace DevConsole
 
 			//Update Layout
 			RebuildSuggestionBox();
+		}
+
+		private void RebuildSuggestionBox()
+		{
+			if (suggestions.Count > 0)
+			{
+				suggestionBox.SetActive(true);
+
+				//Fix the suggestion ID if needed
+				if (selectedSuggestionID > suggestions.Count - 1)
+				{
+					selectedSuggestionID = suggestions.Count - 1;
+				}
+
+				//Clear the suggestion box
+				suggestionText.text = string.Empty;
+
+				//Add the suggestion text, highlighting the selected one
+				for (int i = suggestions.Count - 1; i >= 0; i--)
+				{
+					string suggestionEntry = $"<color=#{ColorUtility.ToHtmlStringRGBA(suggestionHighlight)}>{suggestions[i].Substring(0, currentCommand.Length)}</color>{suggestions[i].Substring(currentCommand.Length)}\n";
+
+					if (i == selectedSuggestionID)
+					{
+						suggestionText.text += $"<b><size=130%>{suggestionEntry}</size></b>";
+					}
+					else
+					{
+						suggestionText.text += $"{suggestionEntry}";
+					}
+				}
+			}
+			else
+			{
+				suggestionBox.SetActive(false);
+				selectedSuggestionID = -1;
+				suggestionsSelected = false;
+			}
+
+			LayoutRebuilder.ForceRebuildLayoutImmediate(suggestionTextTransform);
 		}
 		#endregion
 
@@ -636,48 +691,6 @@ namespace DevConsole
 		{
 			yield return waitForEndOfFrame;
 			scrollRect.verticalNormalizedPosition = 0;
-		}
-		#endregion
-
-		#region Layout
-		private void RebuildSuggestionBox()
-		{
-			if (suggestions.Count > 0)
-			{
-				suggestionBox.SetActive(true);
-
-				//Fix the suggestion ID if needed
-				if (selectedSuggestionID > suggestions.Count - 1)
-				{
-					selectedSuggestionID = suggestions.Count - 1;
-				}
-
-				//Clear the suggestion box
-				suggestionText.text = string.Empty;
-
-				//Add the suggestion text, highlighting the selected one
-				for (int i = suggestions.Count - 1; i >= 0; i--)
-				{
-					string suggestionEntry = $"<color=#{ColorUtility.ToHtmlStringRGBA(suggestionHighlight)}>{currentCommand}</color>{suggestions[i].Substring(currentCommand.Length)}\n";
-
-					if (i == selectedSuggestionID)
-					{
-						suggestionText.text += $"<b><size=130%>{suggestionEntry}</size></b>";
-					}
-					else
-					{
-						suggestionText.text += $"{suggestionEntry}";
-					}
-				}
-			}
-			else
-			{
-				suggestionBox.SetActive(false);
-				selectedSuggestionID = -1;
-				suggestionsSelected = false;
-			}
-
-			LayoutRebuilder.ForceRebuildLayoutImmediate(suggestionTextTransform);
 		}
 		#endregion
 
