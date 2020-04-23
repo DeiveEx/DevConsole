@@ -454,6 +454,9 @@ namespace DevConsole
 				AppendLogLine($"{validCommands[i].name}({validCommands[i].GetParametersString()})", Color.red);
 			}
 
+			AppendLogLine($"Received:", Color.red);
+			AppendLogLine($"({string.Join(";", parameters.Select(x => x.GetType()))})", Color.red);
+
 			return null;
 		}
 
@@ -531,6 +534,11 @@ namespace DevConsole
 
 			//If all fails, we consider it a string
 			return parameter;
+		}
+
+		private T ConvertParam<T>(object value)
+		{
+			return (T) Convert.ChangeType(value, typeof(T));
 		}
 		#endregion
 
