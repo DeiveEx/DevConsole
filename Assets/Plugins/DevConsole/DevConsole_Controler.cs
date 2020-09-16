@@ -37,7 +37,7 @@ namespace DevConsole
 		public UnityEvent consoleOpen;
 		public UnityEvent consoleClose;
 
-		//"Constants"
+		//Constants
 		private const int maxCharacters = 15000;
 		private WaitForEndOfFrame waitForEndOfFrame = new WaitForEndOfFrame();
 		private Regex extractFuncRegex = new Regex(@"(?<func>\w+(?=\())\s*\((?<params>[^()]*)\)");
@@ -63,12 +63,15 @@ namespace DevConsole
 		[Serializable]
 		public class ConsoleCommand
 		{
+			public delegate void CommandFunction();
+
 			public string name;
 			public string description;
 			public object instance;
 			public MethodInfo methodInfo;
 			public ParameterInfo[] parametersInfos;
 			public string category;
+			public CommandFunction dynamicMethod;
 
 			public string GetParametersString()
 			{
@@ -268,6 +271,18 @@ namespace DevConsole
 			}
 		}
 
+		public void RegisterCommand(string name, string description, ConsoleCommand.CommandFunction function, string category = null)
+		{
+			ConsoleCommand command = new ConsoleCommand() {
+				name = name,
+				description = description,
+				category = category,
+				dynamicMethod = function
+			};
+
+			commands.Add(command);
+		}
+
 		private void AddCommandToHistory(string commandLine)
 		{
 			if (commandHistory.Count == 0 || (commandHistory.Count > 0 && commandHistory[0] != commandLine))
@@ -432,6 +447,12 @@ namespace DevConsole
 			//Find the command that has the same parameters types and Invoke the method
 			foreach (var item in validCommands)
 			{
+				if(item.instance == null && item.dynamicMethod != null)
+				{
+					item.dynamicMethod.Invoke();
+					return null;
+				}
+
 				if (parameters.Length == item.parametersInfos.Length)
 				{
 					try
@@ -705,9 +726,16 @@ namespace DevConsole
 		#region Basic Commands
 		private void RegisterBasicCommands()
 		{
+			//You can register a command by using a Method name
 			RegisterCommand("help", "Show all registered commands.", "ShowHelp", this, "Utility");
 			RegisterCommand("clear", "Clear the console.", "ClearConsole", this, "Utility");
 			RegisterCommand("print", "Print the typed text in the console a number of times.", "Print", this, "Utility");
+
+			//Or by providing a parameterless function to the delegate
+			RegisterCommand("test2", "Test.", () =>
+			{
+				Debug.Log(historySize);
+			}, "Utility");
 		}
 
 		private void ClearConsole()
@@ -732,10 +760,18 @@ namespace DevConsole
 					categories.Add(item.category);
 					AppendLogLine($"# {item.category} #", helpColor);
 
-					foreach (var categoriItem in commands.Where(x => x.category == item.category))
+					foreach (var categoryItem in commands.Where(x => x.category == item.category))
 					{
-						AppendLog($"- {categoriItem.name}({categoriItem.GetParametersString()}): ", helpColor);
-						AppendLogLine($"{categoriItem.description}");
+						if (categoryItem.instance == null)
+						{
+							AppendLog($"- {categoryItem.name}(): ", helpColor);
+							AppendLogLine($"{categoryItem.description}");
+						}
+						else
+						{
+							AppendLog($"- {categoryItem.name}({categoryItem.GetParametersString()}): ", helpColor);
+							AppendLogLine($"{categoryItem.description}");
+						}
 					}
 
 					AppendLogLine("");
