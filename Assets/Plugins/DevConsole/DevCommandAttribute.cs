@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Ignix.DevConsole
+namespace Ignix.Debug.Console
 {
     public class DevCommandAttribute : Attribute
     {

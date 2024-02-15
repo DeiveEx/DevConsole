@@ -9,8 +9,11 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
-namespace Ignix.DevConsole
+namespace Ignix.Debug.Console
 {
 	public enum TargetType
 	{
@@ -20,7 +23,7 @@ namespace Ignix.DevConsole
 		Registry,
 	}
 	
-	public class DevConsoleController : MonoBehaviour
+	public class DevConsole : MonoBehaviour
 	{
 		#region SubTypes
 		
@@ -49,7 +52,7 @@ namespace Ignix.DevConsole
 		
 		#region Fields
 
-		public static DevConsoleController Instance;
+		public static DevConsole Instance;
 		
 		//Constants
 		private const int maxCharacters = 15000;
@@ -65,7 +68,11 @@ namespace Ignix.DevConsole
 		public bool allowQuickCommands = true;
 		[Tooltip("If enabled, pressing ENTER will always autocomplete with the first suggestion, if available.")]
 		public bool alwaysAutoComplete;
-		public string consoleKey = "f1";
+#if ENABLE_INPUT_SYSTEM
+		public InputAction consoleAction;
+#else
+		public KeyCode consoleKey = KeyCode.BackQuote;
+#endif
 		public Color suggestionHighlight = Color.green;
 		public int historySize = 100;
 		[Header("UI Components")]
@@ -117,6 +124,11 @@ namespace Ignix.DevConsole
 			logTextTransform = logText.GetComponent<RectTransform>();
 			suggestionTextTransform = suggestionText.GetComponent<RectTransform>();
 			suggestionBoxTransform = suggestionBox.GetComponent<RectTransform>();
+
+#if ENABLE_INPUT_SYSTEM
+			consoleAction.performed += context => ShowConsole(!consoleScreen.activeSelf);
+			consoleAction.Enable();
+#endif
 		}
 
 		private void Start()
@@ -130,7 +142,7 @@ namespace Ignix.DevConsole
 
 			if (EventSystem.current == null)
 			{
-				Debug.LogError("No event system found! The console might not work!");
+				UnityEngine.Debug.LogError("No event system found! The console might not work!");
 			}
 
 			//Registering the basic commands
@@ -143,13 +155,16 @@ namespace Ignix.DevConsole
 		}
 
 		private void Update()
-		{
+		{	
 			//Toggle console
+			
+#if !ENABLE_INPUT_SYSTEM
 			if (Input.GetKeyDown(consoleKey))
 			{
 				ShowConsole(!consoleScreen.activeSelf);
 			}
-
+#endif
+			
 			//When the console is active
 			if (consoleScreen.activeSelf)
 			{
@@ -423,7 +438,7 @@ namespace Ignix.DevConsole
 			var type = typeof(T);
 
 			if (registry.ContainsKey(type))
-				Debug.LogWarning($"An object of type {type} is already registered in the registry. It will be replaced.");
+				UnityEngine.Debug.LogWarning($"An object of type {type} is already registered in the registry. It will be replaced.");
 
 			registry[type] = instance;
 		}
@@ -475,7 +490,7 @@ namespace Ignix.DevConsole
 
 				if (showFunctionInfo)
 				{
-					Debug.Log($"\nFuncName: {functionName};\nParamCount: {actualParameters.Count};\nRawParams: {parametersText};\nFinalParams: {string.Join("; ", actualParameters.Select(x => x.ToString()))}");
+					UnityEngine.Debug.Log($"\nFuncName: {functionName};\nParamCount: {actualParameters.Count};\nRawParams: {parametersText};\nFinalParams: {string.Join("; ", actualParameters.Select(x => x.ToString()))}");
 				}
 
 				//Add the key to the dictionary to be replaced later, if needed
@@ -532,7 +547,7 @@ namespace Ignix.DevConsole
 					}
 					catch (Exception e)
 					{
-						Debug.LogError(e);
+						UnityEngine.Debug.LogError(e);
 					}
 				}
 			}
@@ -832,7 +847,7 @@ namespace Ignix.DevConsole
 			//Or by providing a parameterless function to the delegate
 			RegisterCommand("test2", "Test.", () =>
 			{
-				Debug.Log(historySize);
+				UnityEngine.Debug.Log(historySize);
 			}, "Utility");
 		}
 
@@ -856,7 +871,7 @@ namespace Ignix.DevConsole
 						
 						if(attribute.targetType != TargetType.None && !type.IsSubclassOf(typeof(MonoBehaviour)))
 						{
-							Debug.LogError($"Class of type {type} is not a {nameof(MonoBehaviour)}. TargetType {attribute.targetType} is can only be used with {nameof(MonoBehaviour)}");
+							UnityEngine.Debug.LogError($"Class of type {type} is not a {nameof(MonoBehaviour)}. TargetType {attribute.targetType} is can only be used with {nameof(MonoBehaviour)}");
 							continue;
 						}
 						
