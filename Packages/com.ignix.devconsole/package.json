@@ -1,0 +1,24 @@
+{
+    "name": "com.ignix.devconsole",
+    "version": "2.1.0",
+    "displayName": "DevConsole",
+    "description": "An in-game console that shows Unity Logs and can execute custom commands",
+    "unity": "2019.4",
+    "unityRelease": "24f1",
+    "documentationUrl": "",
+    "changelogUrl": "",
+    "licensesUrl": "",
+    "dependencies": {
+      "com.unity.textmeshpro": "2.1.4"
+   },
+   "keywords": [
+      "console",
+      "development",
+      "debug"
+    ],
+    "author": {
+      "name": "Felipe Carmo Cavaco",
+      "email": "felipe.carmo.cavaco@gmail.com",
+      "url": "https://github.com/DeiveEx"
+    }
+  }

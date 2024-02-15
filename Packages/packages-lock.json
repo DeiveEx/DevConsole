@@ -1,5 +1,13 @@
 {
   "dependencies": {
+    "com.ignix.devconsole": {
+      "version": "file:com.ignix.devconsole",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.textmeshpro": "2.1.4"
+      }
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 0,
