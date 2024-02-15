@@ -1,14 +1,12 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using DevConsole;
+﻿using UnityEngine;
+using Ignix.DevConsole;
 
 public class DevConsoleTester : MonoBehaviour
 {
     // Start is called before the first frame update
     void Start()
     {
-		DevConsole_Controler devConsole = GameObject.FindObjectOfType<DevConsole_Controler>();
+	    DevConsoleController devConsole = DevConsoleController.Instance;
 
 		devConsole.RegisterCommand("add", "Add", "Add", this, "Math");
 		devConsole.RegisterCommand("sub", "Sub", "Sub", this, "Math");
@@ -22,6 +20,7 @@ public class DevConsoleTester : MonoBehaviour
 	}
 
 	#region Tests
+	
 	private void Test()
 	{
 		Debug.Log("Test command");
@@ -110,5 +109,24 @@ public class DevConsoleTester : MonoBehaviour
 	{
 		t.position = pos;
 	}
+	
+	[DevCommand]
+	private void TestAttribute()
+	{
+		Debug.Log("This is a method that was registered using an Attribute");
+	}
+	
+	[DevCommand]
+	private void TestAttribute(string testParam)
+	{
+		Debug.Log($"This is a method that was registered using an Attribute. The parameter is: {testParam}");
+	}
+	
+	[DevCommand("TestNamedCommand", "A command created by using the attribute", category = "Test", targetType = TargetType.Single)]
+	private void TestAttribute3()
+	{
+		Debug.Log($"This is a method that was registered using an Attribute. This example uses a custom name");
+	}
+	
 	#endregion
 }
